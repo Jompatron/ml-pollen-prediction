@@ -1,0 +1,25 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./artifacts:/app/ml/artifacts
+    environment:
+      - PYTHONPATH=/app
+    restart: unless-stopped
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python -m ml.jobs.scheduler
+    volumes:
+      - ./artifacts:/app/ml/artifacts
+    environment:
+      - PYTHONPATH=/app
+    depends_on:
+      - api
+    restart: unless-stopped

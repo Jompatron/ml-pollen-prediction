@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "pollen-forecast-ml"
+version = "1.0.0"
+description = "ML backend for Pollen Forecast Stockholm"
+requires-python = ">=3.11"
+dependencies = []  # See requirements.txt for pinned deps
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["config*", "data*", "models*", "monitoring*", "api*", "jobs*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

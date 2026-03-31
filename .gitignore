@@ -1,0 +1,30 @@
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+
+# Model checkpoints — large binary files
+artifacts/models/
+
+# Prediction cache — grows unbounded
+artifacts/metrics/predictions/
+
+# Raw data — committed via GitHub Actions
+# artifacts/data/  ← intentionally tracked
+
+# Temporary logs
+lightning_logs/
+*.log
+train_log*.txt
+api_log*.txt
+
+# Secrets
+.env
+.env.local
