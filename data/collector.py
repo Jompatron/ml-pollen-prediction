@@ -14,11 +14,27 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from config.settings import settings
 
 
+async def _get_with_retry(client: httpx.AsyncClient, url: str, params: dict, retries: int = 4) -> httpx.Response:
+    """GET with exponential backoff retry for transient network errors."""
+    for attempt in range(retries):
+        try:
+            resp = await client.get(url, params=params)
+            resp.raise_for_status()
+            return resp
+        except (httpx.ConnectError, httpx.TimeoutException, httpx.HTTPStatusError) as e:
+            if attempt == retries - 1:
+                raise
+            wait = 2 ** attempt  # 1s, 2s, 4s, 8s
+            logger.warning(f"Request failed (attempt {attempt + 1}/{retries}): {e} — retrying in {wait}s")
+            await asyncio.sleep(wait)
+    raise RuntimeError("Unreachable")
+
+
 class OpenMeteoCollector:
     """Collects pollen and weather data from Open-Meteo APIs."""
 
     def __init__(self):
-        self.client = httpx.AsyncClient(timeout=30.0)
+        self.client = httpx.AsyncClient(timeout=60.0)
 
     async def fetch_pollen(
         self,
@@ -47,8 +63,7 @@ class OpenMeteoCollector:
             params["forecast_days"] = forecast_days
 
         logger.debug(f"Fetching pollen data: {params}")
-        resp = await self.client.get(settings.open_meteo_air_quality_url, params=params)
-        resp.raise_for_status()
+        resp = await _get_with_retry(self.client, settings.open_meteo_air_quality_url, params)
         data = resp.json()
 
         df = pd.DataFrame(data["hourly"])
@@ -100,8 +115,7 @@ class OpenMeteoCollector:
             "timezone": "UTC",
         }
         logger.debug(f"Fetching archive weather: {start_date} → {end_date}")
-        resp = await self.client.get(settings.open_meteo_historical_url, params=params)
-        resp.raise_for_status()
+        resp = await _get_with_retry(self.client, settings.open_meteo_historical_url, params)
         data = resp.json()
         df = pd.DataFrame(data["hourly"])
         df["time"] = pd.to_datetime(df["time"], utc=True)
@@ -124,8 +138,7 @@ class OpenMeteoCollector:
             "timezone": "UTC",
         }
         logger.debug(f"Fetching recent weather")
-        resp = await self.client.get(settings.open_meteo_weather_url, params=params)
-        resp.raise_for_status()
+        resp = await _get_with_retry(self.client, settings.open_meteo_weather_url, params)
         data = resp.json()
         df = pd.DataFrame(data["hourly"])
         df["time"] = pd.to_datetime(df["time"], utc=True)
