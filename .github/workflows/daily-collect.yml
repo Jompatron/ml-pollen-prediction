@@ -2,8 +2,8 @@ name: Daily Pollen Data Collection
 
 on:
   schedule:
-    - cron: '0 6 * * *'   # 06:00 UTC (08:00 Stockholm)
-    - cron: '0 18 * * *'  # 18:00 UTC (20:00 Stockholm)
+    #- cron: '0 6 * * *'   # 06:00 UTC (08:00 Stockholm)
+    #- cron: '0 18 * * *'  # 18:00 UTC (20:00 Stockholm)
   workflow_dispatch:        # Manual trigger from GitHub UI
 
 permissions:
